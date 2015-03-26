@@ -5,6 +5,7 @@ AC_PREREQ(2.57)
 AC_INIT([gpsim], [0.28.90], [<http://gpsim.sourceforge.net/gpsim.html>])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
+AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_MACRO_DIR([m4])

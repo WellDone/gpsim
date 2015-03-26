@@ -1,0 +1,12 @@
+language: c++
+sudo: true
+install: ./install.sh
+script: ./build.sh configure && ./build.sh make && ./build.sh package
+deploy:
+  provider: releases
+  api_key:
+    secure: gU/+CafZlqD1ZY63M3rlBeS9FyrVaeLadgAoBl6Lu0ZFZG+NOt8DkOlbz+BVK3WV/tk7zBC9PEfUJu7S3TWnMxAVaCH0dGExqUQEljseqsjv4Bo5kvFF9+Ma2l5LILXw6jHpD5W74klE6y4EdUfr58OU55LDLNhUyFPbdvLxkKo=
+  file: ./gpsim.tar.gz
+  on:
+    repo: WellDone/gpsim
+    tags: true
