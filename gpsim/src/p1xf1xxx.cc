@@ -464,7 +464,6 @@ void P12F1822::create_sfr_map()
 
 
   //add_sfr_register(indf,    0x00);
-  add_file_registers(0xa0, 0xbf, 0x00);
   add_sfr_register(m_porta, 0x0c);
   add_sfr_register(pir1,    0x11, RegisterValue(0,0),"pir1");
   add_sfr_register(pir2,    0x12, RegisterValue(0,0),"pir2");
@@ -720,6 +719,8 @@ void  P12F1822::create(int ram_top, int eeprom_size)
   e->get_reg_eecon1()->set_valid_bits(0xff);
 
   add_file_registers(0x20, ram_top, 0x00);
+  add_file_registers(0xa0, 0xbf, 0x00);
+
   _14bit_e_processor::create_sfr_map();
   P12F1822::create_sfr_map();
   // Set DeviceID
@@ -1776,6 +1777,8 @@ void  P16F1823::create(int ram_top, int eeprom_size)
   e->get_reg_eecon1()->set_valid_bits(0xff);
 
   add_file_registers(0x20, ram_top, 0x00);
+  add_file_registers(0xa0, 0xbf, 0x00);
+
   _14bit_e_processor::create_sfr_map();
   P12F1822::create_sfr_map();
   P16F1823::create_sfr_map();

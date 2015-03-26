@@ -44,6 +44,7 @@ libgpsim_la_SOURCES = \
 	modules.cc \
 	os_dependent.cc \
 	p1xf1xxx.cc \
+	p16f1847.cc \
 	p12f6xx.cc \
 	p12x.cc \
 	p16f62x.cc \
@@ -129,6 +130,7 @@ gpsiminclude_HEADERS = \
 	p12f6xx.h \
 	p12x.h \
 	p1xf1xxx.h \
+	p16f1847.h \
 	p16x5x.h \
 	p16f62x.h \
 	p16x6x.h \

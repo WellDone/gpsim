@@ -125,6 +125,7 @@ enum PROCESSOR_TYPE
   _P16F886_,
   _P16F887_,
   _P16F1823_,
+  _P16F1847_,
   _P16F1788_,
   _P16F1789_,
   _P17C7xx_,
@@ -260,6 +261,8 @@ public:
   virtual void callback_print();
   void set_breakpoint(unsigned int bpn);
   bool hasBreak() { return breakpoint != 0;}
+
+  bool isEnabled() {return wdte;}; 
 
 protected:
   pic_processor *cpu;           // The cpu to which this wdt belongs.

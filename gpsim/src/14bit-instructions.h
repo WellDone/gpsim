@@ -94,7 +94,6 @@ public:
 class BRW : public instruction
 {
 public:
-  int destination_index;
   unsigned int absolute_destination_index;
 
   BRW(Processor *new_cpu, unsigned int new_opcode, unsigned int address);

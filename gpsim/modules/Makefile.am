@@ -15,6 +15,8 @@ libgpsim_modules_la_SOURCES = \
 	push_button.cc push_button.h \
 	encoder.cc encoder.h \
 	i2c-eeprom.cc i2c-eeprom.h \
+	momo_slave.cc momo_slave.h \
+	momo_python_slave.cc momo_python_slave.h \
 	stimuli.h stimuli.cc \
 	ttl.cc ttl.h \
 	video.cc video.h \

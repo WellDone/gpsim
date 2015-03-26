@@ -55,6 +55,7 @@ License along with this library; if not, see
 #include "p12x.h"
 #include "p12f6xx.h"
 #include "p1xf1xxx.h"
+#include "p16f1847.h"
 #ifdef P17C7XX  // code no longer works
 #include "p17c75x.h"
 #endif
@@ -326,6 +327,9 @@ ProcessorConstructor pP16F1788(P16F1788::construct ,
                               "__16F1788", "pic16f1788", "p16f1788", "16f1788");
 ProcessorConstructor pP16F1823(P16F1823::construct ,
                               "__16F1823", "pic16f1823", "p16f1823", "16f1823");
+ProcessorConstructor pP16F1847(P16F1847::construct ,
+                              "__16F1847", "pic16f1847", "p16f1847", "16f1847");
+
 #ifdef P17C7XX  // code no longer works
 ProcessorConstructor pP17C7xx(P17C7xx::construct ,
                               "__17C7xx", "pic17c7xx",  "p17c7xx", "17c7xx");

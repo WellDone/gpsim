@@ -71,6 +71,7 @@ src_OBJECTS =			\
 	operator.o		\
 	os_dependent.o		\
 	p1xf1xxx.o		\
+	p16f1847.o 		\
 	p12f6xx.o		\
 	p12x.o			\
 	p16f62x.o		\

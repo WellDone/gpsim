@@ -39,6 +39,8 @@ modules_OBJECTS =		\
 	encoder.o		\
 	i2c.o			\
 	i2c-eeprom.o		\
+	momo_slave.o    \
+	momo_python_slave.o \
 	led.o			\
 	logic.o			\
 	push_button.o		\

@@ -70,8 +70,7 @@ function make_gpsim {
 function clean_gpsim {
 	cd "$GPSIMDIR"
 	make clean > /dev/null 2>&1
-	svn st | grep '^?' | awk '{print $2}' | xargs rm -rf
-	svn revert -R .
+	rm -rf "$BUILDDIR"
 	cd ..
 }
 
@@ -94,12 +93,10 @@ task="$1"
 shift
 case $task in
 	configure)
-	update_svn
 	configure_gpsim
 	;;
 
 	make)
-	update_svn
 	make_gpsim
 	;;
 

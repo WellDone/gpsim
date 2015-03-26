@@ -41,8 +41,6 @@ USART_MODULE 	*m_usart;
 SSP1_MODULE 	*m_ssp;
 T1GCON    	*m_t1gcon;
 CCPCON		*m_ccpcon;
-
-
 };
 
 class P12F1822 : public _14bit_e_processor
@@ -244,6 +242,7 @@ public:
   virtual unsigned int register_memory_size () const { return 0x1000; }
 
 };
+
 class P16F1823 : public P12F1822
 {
 public:
@@ -262,4 +261,5 @@ public:
   PicLatchRegister *m_latc;
   WPU              *m_wpuc;
 };
+
 #endif //__P1xF1xxx_H__

@@ -128,6 +128,9 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_TYPE_SIGNAL
 
+#Check for python so that we can compile MoMoPythonSlave
+AX_PYTHON_DEVEL(>='2.7.0')
+
 # Checks for library functions.
 AC_FUNC_ALLOCA
 AC_PROG_GCC_TRADITIONAL
@@ -168,9 +171,10 @@ case "${host}" in
     ;;
 esac
 
+CPPFLAGS="${PYTHON_CPPFLAGS}"
 CFLAGS="${CFLAGS} ${AM_CFLAGS}"
 CXXFLAGS="${CXXFLAGS} ${AM_CXXFLAGS}"
-LDFLAGS="${LDFLAGS} ${AM_LDFLAGS}"
+LDFLAGS="${LDFLAGS} ${AM_LDFLAGS} ${PYTHON_LDFLAGS} ${PYTHON_EXTRA_LDFLAGS} ${PYTHON_EXTRA_LIBS}"
 
 # Host filesystem options
 case "${host}" in
