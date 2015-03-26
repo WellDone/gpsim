@@ -1,0 +1,3 @@
+gui_callbacks.lo: gui_callbacks.cc ../config.h
+
+../config.h:

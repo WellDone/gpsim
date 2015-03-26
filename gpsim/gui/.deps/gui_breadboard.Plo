@@ -1,0 +1,3 @@
+gui_breadboard.lo: gui_breadboard.cc ../config.h
+
+../config.h:

@@ -1,0 +1,3 @@
+gui_dialog.lo: gui_dialog.cc ../config.h
+
+../config.h:

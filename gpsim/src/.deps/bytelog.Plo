@@ -1,0 +1,3 @@
+bytelog.lo: bytelog.cc bytelog.h
+
+bytelog.h:

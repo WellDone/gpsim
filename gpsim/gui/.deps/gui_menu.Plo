@@ -1,0 +1,3 @@
+gui_menu.lo: gui_menu.cc ../config.h
+
+../config.h:
