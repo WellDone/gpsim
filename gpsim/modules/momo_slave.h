@@ -1,23 +1,12 @@
 #ifndef __MOMO_SLAVE_H__
 #define __MOMO_SLAVE_H__
 
-#define kMIBHeaderLength	4
-#define kMIBDataLength		20
-#define kMIBPacketLength	(kMIBHeaderLength + kMIBDataLength + 1)
-
 /* IN_MODULE should be defined for modules */
 #define IN_MODULE
 
-#include "../src/modules.h"
-#include "../src/ioports.h"
-#include "../src/stimuli.h"
-#include "../src/packages.h"
-#include "../src/value.h"
-#include <stdint.h>
-#include <vector>
-#include <fstream>
+#include "momo.h"
 
-namespace MoMoSlaveModule
+namespace MomoModule
 {
 
 //Forward Declarations
@@ -39,28 +28,15 @@ enum AcknowledgeState
 	kNoAcknowledge
 };
 
-struct MomoResponse
-{
-	uint8_t				 status;
-	std::vector<uint8_t> response;
-};
-
-class MoMoSlave : public Module 
+class MomoSlave : public MomoDevice 
 {
 	public:
-	MoMoSlave(const char *name);
-	virtual ~MoMoSlave();
+	MomoSlave(const char *name);
+	virtual ~MomoSlave();
 
 	static Module * construct(const char *name);
 
-	void new_sda_edge(bool value);
-	void new_scl_edge(bool value);
-
 	private:
-	Package 			package;
-	I2CSCLPin			*scl;
-	I2CSDAPin			*sda;
-
 	Integer				address_value;
 	String				log_value;
 
@@ -88,10 +64,14 @@ class MoMoSlave : public Module
 
 	protected:
 	virtual void process_mib_packet();
-	virtual MomoResponse handle_mib_endpoint(uint8_t feature, uint8_t command, uint8_t type, uint8_t sender, const std::vector<uint8_t> &params);
+	virtual MomoResponse handle_mib_endpoint(uint8_t sender, uint16_t command, const std::vector<uint8_t> &params);
+
+	virtual void new_sda_edge(bool value);
+	virtual void new_scl_edge(bool value);
 
 	void log_error(const std::string &message);
 	void log_packet(std::ofstream &log, const std::vector<uint8_t> &data);
+	void prepare_response(MomoResponse &resp);
 };
 
 };

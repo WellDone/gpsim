@@ -1,12 +1,12 @@
 #include "momo_python_slave.h"
 #include <string>
 
-namespace MoMoSlaveModule 
+namespace MomoModule 
 {
 
 size_t MoMoPythonSlave::num_instances = 0;
 
-MoMoPythonSlave::MoMoPythonSlave(const char *name) : MoMoSlave(name), python_module("python_module", "", "path to python module implementing this MIB slave"),
+MoMoPythonSlave::MoMoPythonSlave(const char *name) : MomoSlave(name), python_module("python_module", "", "path to python module implementing this MIB slave"),
 													 initialized(false), module_object(NULL), handler_object(NULL)
 {
 	addSymbol(&python_module);
@@ -68,6 +68,82 @@ Module* MoMoPythonSlave::construct(const char *name)
 }
 
 /*
+ * To be called when a python exception is set, set the response status based on  
+ * which exception was thrown.
+ */
+bool MoMoPythonSlave::interpret_exception(uint8_t *status, std::vector<uint8_t> &output)
+{
+	bool success = false;
+	PyObject *err = PyErr_Occurred();
+
+	if (err == NULL)
+	{
+		printf("No exception occured in python code, yet interpret_exception was called.\n");
+		return false;
+	}
+
+	Py_INCREF(err);
+
+	//Get all of the appropriate exception types that we understand
+	PyObject *busy_exc = NULL, *notfound_exc = NULL, *checksum_exc = NULL;
+
+	if (!module_object)
+	{
+		printf("Could not get main module from python code.\n");
+		goto done;
+	}
+
+	//These are all new references.
+	if (PyObject_HasAttrString(module_object, kMoMoBusyException))
+		busy_exc = PyObject_GetAttrString(module_object, kMoMoBusyException);
+
+	if (PyObject_HasAttrString(module_object, kMoMoNotFoundException))
+		notfound_exc = PyObject_GetAttrString(module_object, kMoMoNotFoundException);
+
+	if (PyObject_HasAttrString(module_object, kMoMoChecksumException))
+		checksum_exc = PyObject_GetAttrString(module_object, kMoMoChecksumException);
+
+	if (!busy_exc)
+		printf("Could not load \"module busy\" exception from module.\n");
+
+	if (!notfound_exc)
+		printf("Could not load \"not found\" exception from module.\n");
+
+	if (!checksum_exc)
+		printf("Could not load \"checksum mismatch\" exception from module.\n");
+
+	success = true;
+	output.clear();
+
+	if (busy_exc && PyErr_GivenExceptionMatches(err, busy_exc))
+		*status = kModuleBusyCode;
+	else if (notfound_exc && PyErr_GivenExceptionMatches(err, notfound_exc))
+		*status = kCommandNotFoundCode;
+	else if (checksum_exc && PyErr_GivenExceptionMatches(err, checksum_exc))
+		*status = kChecksumMismatchCode;
+	else
+	{
+		printf("Unknown exception caught from python code in interpret_exception.\n");
+
+		success = false;
+	}
+
+	done:
+	if (busy_exc)
+		Py_DECREF(busy_exc);
+	if (notfound_exc)
+		Py_DECREF(notfound_exc);
+	if (checksum_exc)
+		Py_DECREF(checksum_exc);
+	if (err)
+		Py_DECREF(err);
+
+	PyErr_Clear();
+
+	return success;
+}
+
+/*
  * Check if retval is a valid sequence object and attempt to unpack it into a vector
  * for sending on the line.  
  * 
@@ -110,6 +186,9 @@ bool MoMoPythonSlave::interpret_response(PyObject *retval, uint8_t *status, std:
 	*status = (uint8_t)PyNumber_AsSsize_t(status_obj, NULL);
 	Py_DECREF(status_obj);
 
+	//Set the app defined bit since we got this status from the application.
+	*status |= 1 << 6;
+
 	if (PySequence_Check(value_obj) == 0)
 	{
 		printf("Invalid response from python code, second item is not a sequence.\n");
@@ -132,10 +211,14 @@ bool MoMoPythonSlave::interpret_response(PyObject *retval, uint8_t *status, std:
 		Py_DECREF(obj);
 	}
 
+	//If we have data, set the has_data bit of the response.
+	if (len > 0)
+		*status |= 1 << 7;
+
 	return true;
 }
 
-MomoResponse MoMoPythonSlave::handle_mib_endpoint(uint8_t feature, uint8_t command, uint8_t type, uint8_t sender, const std::vector<uint8_t> &params)
+MomoResponse MoMoPythonSlave::handle_mib_endpoint(uint8_t sender, uint16_t command, const std::vector<uint8_t> &params)
 {
 	MomoResponse resp;
 	bool 		 success = false;
@@ -144,29 +227,21 @@ MomoResponse MoMoPythonSlave::handle_mib_endpoint(uint8_t feature, uint8_t comma
 	
 	if (initialized == true)
 	{
-		PyObject *args = PyTuple_New(5);
+		PyObject *args = PyTuple_New(3);
 		if (args != NULL)
 		{
-			PyObject *feature_obj 	= PyInt_FromLong(feature);
 			PyObject *cmd_obj 		= PyInt_FromLong(command);
-			PyObject *type_obj 		= PyInt_FromLong(type);
 			PyObject *sender_obj 	= PyInt_FromLong(sender);
 			PyObject *params_obj	= PyTuple_New(params.size());
 
-			if (feature_obj && cmd_obj && type_obj && sender_obj && params_obj)
+			if (cmd_obj && sender_obj && params_obj)
 			{
 				bool can_call = true;
 
-				PyTuple_SetItem(args, 0, feature_obj);
-				feature_obj = NULL;
-
-				PyTuple_SetItem(args, 1, cmd_obj);
+				PyTuple_SetItem(args, 0, cmd_obj);
 				cmd_obj = NULL;
 
-				PyTuple_SetItem(args, 2, type_obj);
-				type_obj = NULL;
-
-				PyTuple_SetItem(args, 3, sender_obj);
+				PyTuple_SetItem(args, 1, sender_obj);
 				sender_obj = NULL;
 
 				//Create the param tuple with bytes
@@ -182,34 +257,38 @@ MomoResponse MoMoPythonSlave::handle_mib_endpoint(uint8_t feature, uint8_t comma
 					PyTuple_SetItem(params_obj, i, obj);
 				}
 
-				PyTuple_SetItem(args, 4, params_obj);
+				PyTuple_SetItem(args, 2, params_obj);
 				params_obj = NULL;
 
 				if (can_call)
 				{
 					PyObject *retval = PyObject_CallObject(handler_object, args);
-					if (retval)
+
+					//If an exception was set, figure out what kind it was so that we can set the appropriate
+					//response status.
+					PyObject *err = PyErr_Occurred();
+					if (err)
+					{
+						printf("Exception was thrown during execution.\n");
+						success = interpret_exception(&resp.status, resp.response);
+					}
+					else if (retval)
 					{
 						if (interpret_response(retval, &resp.status, resp.response))
 							success = true;
 						else
 							printf("Could not interpret response from python code.\n");
-
-						Py_DECREF(retval);
 					}
+
+					if (retval)
+						Py_DECREF(retval);
 				}
 
 				Py_DECREF(args); //tuple holds the refs to all of its contents so they are released as well
 			}
 
-			if (feature_obj)
-				Py_DECREF(feature_obj);
-
 			if (cmd_obj)
 				Py_DECREF(cmd_obj);
-
-			if (type_obj)
-				Py_DECREF(type_obj);
 
 			if (sender_obj)
 				Py_DECREF(sender_obj);
@@ -222,7 +301,7 @@ MomoResponse MoMoPythonSlave::handle_mib_endpoint(uint8_t feature, uint8_t comma
 	if (success == false)
 	{
 		printf("MoMoPythonSlave called but python code could not be loaded or executed successfully.\n");
-		resp.status = 0b00000000;
+		resp.status = kModuleBusyCode;
 		resp.response.clear();
 	}
 	

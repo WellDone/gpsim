@@ -6,10 +6,14 @@
 
 #define kMoMoSlavePythonFunction "handle_mib_endpoint"
 
-namespace MoMoSlaveModule 
+#define kMoMoBusyException		 "BusyException"
+#define kMoMoNotFoundException	 "EndpointNotFoundException"
+#define kMoMoChecksumException	 "ChecksumMismatchException"
+
+namespace MomoModule 
 {
 
-class MoMoPythonSlave : public MoMoSlave
+class MoMoPythonSlave : public MomoSlave
 {
 	public:
 	MoMoPythonSlave(const char *name);
@@ -18,7 +22,7 @@ class MoMoPythonSlave : public MoMoSlave
 	static Module* construct(const char *name);
 
 	protected:
-	virtual MomoResponse handle_mib_endpoint(uint8_t feature, uint8_t command, uint8_t type, uint8_t sender, const std::vector<uint8_t> &params);
+	virtual MomoResponse handle_mib_endpoint(uint8_t sender, uint16_t command, const std::vector<uint8_t> &params);
 	static size_t num_instances;
 
 	private:
@@ -30,6 +34,7 @@ class MoMoPythonSlave : public MoMoSlave
 
 	void load_module();
 	bool interpret_response(PyObject *retval, uint8_t *status, std::vector<uint8_t> &output);
+	bool interpret_exception(uint8_t *status, std::vector<uint8_t> &output);
 };
 
 };
