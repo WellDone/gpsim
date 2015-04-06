@@ -25,7 +25,7 @@ void I2CSCLPin::setDrivenState(bool new_dstate)
 	}
 }
 
-MomoDevice::MomoDevice(const char *name) : Module(name, "Momo Simulated Device"), package(2)
+MomoDevice::MomoDevice(const char *new_name) : Module(new_name, "Momo Simulated Device"), package(2)
 {
 	std::string pin_name;
 

@@ -5,6 +5,8 @@ set -e
 #From http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 SRCDIR="$BASEDIR/src"
+SRCNAME="src"
+BUILDNAME="build"
 GPSIMBUILDDIR="$BASEDIR/build"
 OUTDIR="$BASEDIR/out"
 
@@ -21,10 +23,16 @@ function usage {
 
 function link_gpsim {
 	mkdir -p $GPSIMBUILDDIR
-	cd "$GPSIMBUILDDIR"
+	cd "$SRCDIR"
 	echo "Linking src directory to build directory."
-	find $SRCDIR -mindepth 1 -depth -type d -printf "%P\n" | while read dir; do mkdir -p "$dir"; done
-	find $SRCDIR -type f -printf "%P\n" | while read file; do ln -sf "$SRCDIR/$file" "$file"; done
+	
+	#More cross platform way to do the symbolic linking 
+	#(other way does not work on os x b/c bsd find does not support -printf
+	find . -type d -exec mkdir -p ../$BUILDNAME/{} \;
+	find . -type f -exec ln -sf "$SRCDIR/{}" ../$BUILDNAME/{} \;
+	#find $SRCDIR -mindepth 1 -depth -type d -printf \"%P\n\" | while read dir; do mkdir -p "$dir"; done
+	#find $SRCDIR -type f -printf \"%P\n\" | while read file; do ln -sf "$SRCDIR/$file" "$file"; done
+	cd ..
 }
 
 function configure_gpsim {
@@ -50,10 +58,7 @@ function make_gpsim {
 
 function clean_gpsim {
 	rm -rf "$GPSIMBUILDDIR"
-	cd "$GPSIMBUILDDIR"
-	make clean > /dev/null 2>&1
 	rm -rf "$OUTDIR"
-	cd ..
 }
 
 function package_gpsim {

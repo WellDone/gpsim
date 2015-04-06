@@ -99,15 +99,15 @@ class MomoDevice : public Module
 	MomoDevice(const char *name);
 	virtual ~MomoDevice();
 
+	virtual void new_sda_edge(bool value) = 0;
+	virtual void new_scl_edge(bool value) = 0;
+
 	private:
 	Package 	package;
 
 	protected:
 	I2CSCLPin	*scl;
 	I2CSDAPin	*sda;
-
-	virtual void new_sda_edge(bool value) = 0;
-	virtual void new_scl_edge(bool value) = 0;
 };
 
 };

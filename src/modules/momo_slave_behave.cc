@@ -1,4 +1,4 @@
-#include "momo_slave.h"
+#include "momo_slave_behave.h"
 #include <string>
 #include <fstream>
 #include <iomanip>
@@ -6,28 +6,20 @@
 namespace MomoModule
 {
 
-MomoSlave::MomoSlave(const char *new_name) : MomoDevice(new_name), address_value("address", 0, "I2C Address"),
-											 log_value("logfile", "mib_calls.log", "Path to log file")
+MomoSlaveBehavior::MomoSlaveBehavior(I2CSCLPin *new_scl, I2CSDAPin *new_sda) : scl(new_scl), sda(new_sda)
 {
-	addSymbol(&address_value);
-	addSymbol(&log_value);
-
 	state = kIdleState;
 	send_acknowledge = kNoAcknowledge;
 	ack_value = false;
+	address = 127;
 }
 
-MomoSlave::~MomoSlave()
+MomoSlaveBehavior::~MomoSlaveBehavior()
 {
 
 }
 
-Module * MomoSlave::construct(const char *name)
-{
-	return new MomoSlave(name);
-}
-
-bool MomoSlave::is_start_condition(bool sda_edge)
+bool MomoSlaveBehavior::is_start_condition(bool sda_edge)
 {
 	if (sda_edge == false && scl->getDrivenState() == true)
 		return true;
@@ -35,7 +27,7 @@ bool MomoSlave::is_start_condition(bool sda_edge)
 	return false;
 }
 
-bool MomoSlave::is_stop_condition(bool sda_edge)
+bool MomoSlaveBehavior::is_stop_condition(bool sda_edge)
 {
 	if (sda_edge == true && scl->getDrivenState() == true)
 		return true;
@@ -43,13 +35,13 @@ bool MomoSlave::is_stop_condition(bool sda_edge)
 	return false;
 }
 
-void MomoSlave::begin_reading()
+void MomoSlaveBehavior::begin_reading()
 {
 	current_byte = 0;
 	bits_read = 0;
 }
 
-void MomoSlave::begin_writing()
+void MomoSlaveBehavior::begin_writing()
 {
 	current_i = 0;
 	bits_written = 0;
@@ -58,7 +50,7 @@ void MomoSlave::begin_writing()
 /*
  * Shift in 1 bit and if we have shifted in an entire byte, return true
  */
-bool MomoSlave::shift_read_bit()
+bool MomoSlaveBehavior::shift_read_bit()
 {
 	bool value = sda->getDrivenState();
 
@@ -73,28 +65,27 @@ bool MomoSlave::shift_read_bit()
 	return false;
 }
 
-void MomoSlave::acknowledge_byte(bool ack)
+void MomoSlaveBehavior::acknowledge_byte(bool ack)
 {
 	send_acknowledge = kStartAcknowledge;
 	ack_value = ack;
 }
 
-void MomoSlave::log_error(const std::string &message)
+void MomoSlaveBehavior::log_error(const std::string &message)
 {
 	std::ofstream log;
-	std::string logfile = log_value.getVal();
 
-	if (logfile.size() == 0)
+	if (log_path.size() == 0)
 		return;
 
-	log.open(logfile.c_str(), std::ios_base::app);
+	log.open(log_path.c_str(), std::ios_base::app);
 
 	log << "INVALID MIB PACKET:" << message << ": ";
 	log_packet(log, data);
 	log << "\n";
 }
 
-void MomoSlave::log_packet(std::ofstream &log, const std::vector<uint8_t> &data)
+void MomoSlaveBehavior::log_packet(std::ofstream &log, const std::vector<uint8_t> &data)
 {
 	log << "[";
 	for (size_t i=0; i< data.size(); ++i)
@@ -108,7 +99,7 @@ void MomoSlave::log_packet(std::ofstream &log, const std::vector<uint8_t> &data)
 	log << "]";
 }
 
-MomoResponse MomoSlave::handle_mib_endpoint(uint8_t sender, uint16_t command, const std::vector<uint8_t> &params)
+MomoResponse MomoSlaveBehavior::handle_mib_endpoint(uint8_t sender, uint16_t command, const std::vector<uint8_t> &params)
 {
 	//Return a command not found response since this endpoint (like all endpoints...) has not been implemented
 	MomoResponse resp;
@@ -117,15 +108,14 @@ MomoResponse MomoSlave::handle_mib_endpoint(uint8_t sender, uint16_t command, co
 	return resp;
 }
 
-void MomoSlave::prepare_response(MomoResponse &resp)
+void MomoSlaveBehavior::prepare_response(MomoResponse &resp)
 {
 	uint8_t sum;
 	std::ofstream log;
-	std::string logfile = log_value.getVal();
 
 	//Log that we received this valid mib packet
-	if (logfile.size() > 0)
-		log.open(logfile.c_str(), std::ios_base::app);
+	if (log_path.size() > 0)
+		log.open(log_path.c_str(), std::ios_base::app);
 
 	resp.response.resize(kMIBDataLength);
 	data.resize(kMIBPacketLength);
@@ -145,7 +135,7 @@ void MomoSlave::prepare_response(MomoResponse &resp)
 	data[kMIBPacketLength - 1] = (~sum) + 1;
 
 	//Log that we received this valid mib packet
-	if (logfile.size() > 0)
+	if (log_path.size() > 0)
 	{
 		log << "RESPONSE: 0x" << std::hex << int(resp.status) << ": ";
 		log_packet(log, data);
@@ -159,7 +149,7 @@ void MomoSlave::prepare_response(MomoResponse &resp)
  * the packet.  Subclasses can choose to respond in their
  * own ways.
  */
-void MomoSlave::process_mib_packet()
+void MomoSlaveBehavior::process_mib_packet()
 {
 	uint8_t sum = 0;
 	if (data.size() != kMIBPacketLength)
@@ -183,14 +173,13 @@ void MomoSlave::process_mib_packet()
 	}
 
 	//Log reception of packet
-	std::string logfile = log_value.getVal();
 
 	//Log that we received this valid mib packet
-	if (logfile.size() > 0)
+	if (log_path.size() > 0)
 	{
 		//Open log inside this block so that it autocloses.
 		std::ofstream log;
-		log.open(logfile.c_str(), std::ios_base::app);
+		log.open(log_path.c_str(), std::ios_base::app);
 
 		log << "VALID MIB PACKET: ";
 		log_packet(log, data);
@@ -216,7 +205,7 @@ void MomoSlave::process_mib_packet()
 	prepare_response(resp);
 }
 
-void MomoSlave::new_scl_edge(bool value)
+void MomoSlaveBehavior::new_scl_edge(bool value)
 {
 	if (value && (state == kReadingAddress || state == kReadingData) && send_acknowledge == kNoAcknowledge)
 	{
@@ -239,7 +228,7 @@ void MomoSlave::new_scl_edge(bool value)
 				uint8_t send_addr = current_byte >> 1;
 				bool	reading   = (current_byte & 1);
 
-				if (send_addr != address_value.getVal())
+				if (send_addr != address)
 				{
 					acknowledge_byte(false);
 					state = kIdleState;
@@ -318,10 +307,9 @@ void MomoSlave::new_scl_edge(bool value)
 			}
 		}
 	}
-
 }
 
-void MomoSlave::new_sda_edge(bool value)
+void MomoSlaveBehavior::new_sda_edge(bool value)
 {
 	if (is_start_condition(value))
 	{
@@ -330,6 +318,16 @@ void MomoSlave::new_sda_edge(bool value)
 	}
 	else if (is_stop_condition(value))
 		state = kIdleState;
+}
+
+void MomoSlaveBehavior::set_logpath(const std::string &newpath)
+{
+	log_path = newpath;
+}
+
+void MomoSlaveBehavior::set_address(unsigned int new_address)
+{
+	address = new_address;
 }
 
 };

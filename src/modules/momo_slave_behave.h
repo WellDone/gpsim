@@ -1,5 +1,5 @@
-#ifndef __MOMO_SLAVE_H__
-#define __MOMO_SLAVE_H__
+#ifndef __MOMO_SLAVE_BEHAVE_H__
+#define __MOMO_SLAVE_BEHAVE_H__
 
 /* IN_MODULE should be defined for modules */
 #define IN_MODULE
@@ -28,18 +28,9 @@ enum AcknowledgeState
 	kNoAcknowledge
 };
 
-class MomoSlave : public MomoDevice 
+class MomoSlaveBehavior
 {
-	public:
-	MomoSlave(const char *name);
-	virtual ~MomoSlave();
-
-	static Module * construct(const char *name);
-
 	private:
-	Integer				address_value;
-	String				log_value;
-
 	uint8_t				current_byte;
 	uint8_t				bits_read;
 
@@ -63,17 +54,29 @@ class MomoSlave : public MomoDevice
 	bool shift_read_bit();
 
 	protected:
+	I2CSCLPin		*scl;
+	I2CSDAPin		*sda;
+	std::string 	log_path;
+	unsigned int 	address;
+
 	virtual void process_mib_packet();
 	virtual MomoResponse handle_mib_endpoint(uint8_t sender, uint16_t command, const std::vector<uint8_t> &params);
-
-	virtual void new_sda_edge(bool value);
-	virtual void new_scl_edge(bool value);
 
 	void log_error(const std::string &message);
 	void log_packet(std::ofstream &log, const std::vector<uint8_t> &data);
 	void prepare_response(MomoResponse &resp);
+
+	public:
+	MomoSlaveBehavior(I2CSCLPin *new_scl, I2CSDAPin *new_sda);
+	virtual ~MomoSlaveBehavior();
+
+	void set_logpath(const std::string &newpath);
+	void set_address(unsigned int new_address);
+
+	void new_sda_edge(bool value);
+	void new_scl_edge(bool value);
 };
 
-};
+}
 
 #endif

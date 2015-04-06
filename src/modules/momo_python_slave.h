@@ -1,42 +1,38 @@
 #ifndef __MOMO_PYTHON_SLAVE_H__
 #define __MOMO_PYTHON_SLAVE_H__
 
-#include "momo_slave.h"
-#include <Python.h>
+#include "momo_python_slave_behave.h"
 
-#define kMoMoSlavePythonFunction "handle_mib_endpoint"
+#include "momo.h"
 
-#define kMoMoBusyException		 "BusyException"
-#define kMoMoNotFoundException	 "EndpointNotFoundException"
-#define kMoMoChecksumException	 "ChecksumMismatchException"
-
-namespace MomoModule 
+namespace MomoModule
 {
 
-class MoMoPythonSlave : public MomoSlave
+class MomoPythonSlave : MomoDevice
 {
-	public:
-	MoMoPythonSlave(const char *name);
-	virtual ~MoMoPythonSlave();
-
-	static Module* construct(const char *name);
-
-	protected:
-	virtual MomoResponse handle_mib_endpoint(uint8_t sender, uint16_t command, const std::vector<uint8_t> &params);
-	static size_t num_instances;
-
 	private:
-	String		python_module;
-	bool		initialized;
+	MomoPythonSlaveBehavior python_slave;
 
-	PyObject 	*module_object;
-	PyObject	*handler_object;
+	Integer					address_sym;
+	String					log_file_sym;
+	String					module_path_sym;
 
-	void load_module();
-	bool interpret_response(PyObject *retval, uint8_t *status, std::vector<uint8_t> &output);
-	bool interpret_exception(uint8_t *status, std::vector<uint8_t> &output);
+	unsigned int 			address;
+	std::string 			log_file;
+	std::string 			module_path;
+
+	void check_update_variables();
+
+	public:
+	MomoPythonSlave(const char *name);
+	virtual ~MomoPythonSlave();
+
+	static Module *construct(const char *name);
+
+	virtual void new_sda_edge(bool value);
+	virtual void new_scl_edge(bool value);
 };
 
-};
+}
 
 #endif
