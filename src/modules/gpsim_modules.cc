@@ -69,7 +69,7 @@ support:
 #include "i2c-eeprom.h"
 #include "i2c.h"
 #include "momo_python_slave.h"
-
+#include "momo_triggered_master.h"
 
 Module_Types available_modules[] =
 {
@@ -130,6 +130,7 @@ Module_Types available_modules[] =
   { {"I2C-EEPROM256k", "e24xx256"}, I2C_EEPROM_Modules::I2C_EE_Module::construct_256k},
   { {"i2cmaster", "I2CMaster"},   I2C_Module::I2CMaster::construct },
   { {"MoMoPythonSlave", "momo_python_slave"}, MomoModule::MomoPythonSlave::construct},
+  { {"MoMoTriggeredMaster", "momo_triggered_master"}, MomoModule::MomoTriggeredMaster::construct},
   // No more modules
   { {0,0},0}
 };

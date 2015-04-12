@@ -48,28 +48,14 @@ void MomoPythonSlaveBehavior::load_module()
 	if (initialized == true)
 		return;
 
-	if (module_string.size() == 0)
+	module_object = load_python_module(module_string);
+	if (module_object == NULL)
 		return;
 
-	PyObject *module_path = PyString_FromString(module_string.c_str());
-	if (module_path == NULL)
+	handler_object = load_python_function(module_object, std::string(kMoMoSlavePythonFunction));
+	if (handler_object == NULL)
 		return;
-
-	PyObject *module_obj = PyImport_Import(module_path);
-
-	Py_DECREF(module_path);
-	if (module_obj == NULL)
-		return;
-
-	PyObject *handler = PyObject_GetAttrString(module_obj, kMoMoSlavePythonFunction);
-	if (handler == NULL || !PyCallable_Check(handler))
-	{
-		Py_DECREF(module_obj);
-		return;
-	}
-
-	module_object = module_obj;
-	handler_object = handler;
+	
 	initialized = true;
 }
 

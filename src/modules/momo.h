@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <vector>
 #include <fstream>
+#include <Python.h>
 
 namespace MomoModule 
 {
@@ -64,6 +65,14 @@ class I2CPin : public IO_open_collector
 		if(snode)
 			snode->update();
 	}
+
+	void masterDrive(bool new_state)
+	{
+		bDrivingState = new_state;
+
+		if (snode)
+			snode->update();
+	}
 };
 
 
@@ -109,6 +118,10 @@ class MomoDevice : public Module
 	I2CSCLPin	*scl;
 	I2CSDAPin	*sda;
 };
+
+//Helper Functions
+PyObject *	load_python_module(const std::string &path);
+PyObject *	load_python_function(PyObject *module, const std::string &function_name);
 
 };
 
