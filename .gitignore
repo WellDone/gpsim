@@ -2,3 +2,4 @@ build/**
 out/**
 .vagrant
 config.status
+src/cli/parse.cc
