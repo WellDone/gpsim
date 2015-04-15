@@ -120,8 +120,8 @@ void MomoMasterBehavior::begin_send_ack(bool ack)
 void MomoMasterBehavior::begin_repeated_start()
 {
 	sda->setDrivingState(true);
-	scl->setDrivingState(true);
-	microstate = kBeginningRepeatedStart;
+	
+	microstate = kAboutToSendRepeatedStart;
 	set_bp(kNumHalfBaudCycles);
 }
 
@@ -130,6 +130,19 @@ void MomoMasterBehavior::begin_stop()
 	sda->setDrivingState(false);
 	microstate = kBeginningStop;
 	set_bp(kNumHalfBaudCycles);
+}
+
+void MomoMasterBehavior::continue_stop()
+{
+	scl->setDrivingState(true);
+	microstate = kFinishingStop;
+	set_bp(kNumHalfBaudCycles);
+}
+
+void MomoMasterBehavior::finish_stop()
+{
+	sda->setDrivingState(true);
+	microstate = kIdleMicrostate;
 }
 
 void MomoMasterBehavior::begin_receive_data_byte()
@@ -184,13 +197,11 @@ void MomoMasterBehavior::receive_callback()
 	switch(microstate)
 	{
 		case kBeginningStop:
-		scl->setDrivingState(true);
-		set_bp(kNumHalfBaudCycles);
-		microstate = kFinishingStop;
+		continue_stop();
 		break;
 
 		case kFinishingStop:
-		sda->setDrivingState(true);
+		finish_stop();
 		if (read_status == kStopReading)
 			process_response();
 		else if (read_status == kResendCommand)
@@ -262,7 +273,7 @@ void MomoMasterBehavior::check_return_status()
 
 		begin_receive_data_byte();
 	}
-	else if (status + check)
+	else if ( (status + check)  & 0xFF)
 	{
 		nack_next_byte = true;
 		state = kMasterRestartingRead;
@@ -280,7 +291,15 @@ void MomoMasterBehavior::check_return_status()
 	}
 	else
 	{
-		//Check if there is data and read it otherwise finish the transaction
+		bool has_data = status & (1 << 7);
+		if (!has_data)
+		{
+			nack_next_byte = true;
+			state = kMasterFinishingRead;
+			read_status = kStopReading;
+
+			begin_receive_data_byte();
+		}
 	}
 }
 
@@ -302,6 +321,12 @@ void MomoMasterBehavior::send_callback()
 
 		case kIdleMicrostate:
 		printf("Callback when we are in idle microstate in MomoMasterBehavior.\n");
+		break;
+
+		case kAboutToSendRepeatedStart:
+		scl->setDrivingState(true);
+		set_bp(kNumHalfBaudCycles);
+		microstate = kBeginningRepeatedStart;
 		break;
 
 		case kBeginningRepeatedStart:

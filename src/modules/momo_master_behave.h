@@ -33,6 +33,7 @@ enum MasterMicroState
 	kStartSendingData,
 	kSendingBit,
 	kReceivingAck,
+	kAboutToSendRepeatedStart,
 	kBeginningRepeatedStart,
 	kFinishingRepeatedStart,
 	kReceivingBit,
@@ -109,6 +110,8 @@ class MomoMasterBehavior : public TriggerObject
 	void begin_send_ack(bool ack);
 	void begin_receive_data_byte();
 	void begin_stop();
+	void continue_stop();
+	void finish_stop();
 
 	void send_callback();
 	void receive_callback();
