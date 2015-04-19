@@ -1508,6 +1508,9 @@ void I2C_1::clock(bool clock_state)
 		   && m_sspmod->isI2CSlave() 
 		   && (m_sspcon2->value.get() & _SSPCON2::SEN))
 		{
+      //BUGFIX: When SEN is set for i2c mode we need to clock stretch until software
+      //resets the CKP bit.
+      m_sspmod->setSCL(false);
 			m_sspcon->put(m_sspcon->value.get() & ~_SSPCON::CKP);
 		}
 	    }
