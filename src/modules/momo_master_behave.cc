@@ -324,9 +324,7 @@ void MomoMasterBehavior::send_callback()
 		break;
 
 		case kAboutToSendRepeatedStart:
-		scl->setDrivingState(true);
-		set_bp(kNumHalfBaudCycles);
-		microstate = kBeginningRepeatedStart;
+		scl->masterDrive(true); //make sure we get notified when the transition happens.
 		break;
 
 		case kBeginningRepeatedStart:
@@ -413,7 +411,9 @@ void MomoMasterBehavior::set_bp(guint64 in_cycles)
 	guint64 now = bp_manager->get();
 	guint64 next = now + in_cycles;
 
-	if (next_bp)
+	//If our breakpoint has already expired, don't reassign it since it won't be found
+	//otherwise do reassign it.  c.f. gpsim_time.cc:reassign_break() and breakpoint()
+	if (next_bp && (next_bp >= now))
 		bp_manager->reassign_break(next_bp, next, this);
 	else
 		bp_manager->set_break(next, this);
@@ -428,9 +428,8 @@ void MomoMasterBehavior::new_sda_edge(bool value)
 
 void MomoMasterBehavior::new_scl_edge(bool value)
 {
-	if (value && picostate == kWaitingForHigh)
+	if (value && picostate == kWaitingForHigh && microstate != kBeginningRepeatedStart)
 	{
-		//FIXME: Change this so that we continually check to make sure our bit is what is being output
 		if (microstate == kReceivingBit || kReceivingAck)
 		{
 			set_bp(kNumHalfBaudCycles);
@@ -443,6 +442,17 @@ void MomoMasterBehavior::new_scl_edge(bool value)
 			num_sda_checks = 0;
 			set_bp(1);
 		}
+	}
+	else if (value && microstate == kAboutToSendRepeatedStart)
+	{
+		/*
+		 * We get here when we are sending a repeated start after sending the slave a string of data bytes.
+		 * The slave will ACK the last data byte and then clock stretch so we need to release SDA to prepare
+		 * for the Repeated start and then release SCK and wait for it to go high because we don't know how
+		 * long the slave will stretch for.  Once it rises high we can begin the repeated start process.
+		 */
+		set_bp(kNumHalfBaudCycles);
+		microstate = kBeginningRepeatedStart;
 	}
 	else if (!value && picostate == kWaitingHigh)
 		callback(); //If someone pulled scl low while we were waiting high, cut our wait short
