@@ -752,7 +752,7 @@ void EEPROM_EXTND::start_program_memory_read()
 
   rd_adr = eeadr.value.get() | (eeadrh.value.get() << 8);
 
-  get_cycles().set_break(get_cycles().get() + 2, this);
+  get_cycles().set_break(get_cycles().get() + 1, this); //BUGFIX: The dataheet specifies a 2 cycle latency with the next op skipped so this should be a breakpoint in 1 instruction, not 2
   cpu_pic->pc->increment();
 
 }
