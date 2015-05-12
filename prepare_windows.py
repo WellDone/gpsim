@@ -8,6 +8,13 @@
 #    plat/win32/makefile.mingw
 # 3. You must use cygwin (not cygwin64 and you must build a 32 bit binary)
 #    build command is make -f makefile.mingw in gpsim base directory
+#
+# *** Build Instructions for gpsim on Windows ***
+# 1. Read http://gpsim.sourceforge.net/gpsimWin32/gpsimWin32.html and make sure you have cygwin 32 bit installed with the correct packages
+# 2. run `python prepare_windows prepare C:\gpsim_project` from patched_gpsim root directory 
+# 3. from a cygwin shell, navigate to C:\gpsim_project/gpsim and run make -f makefile.mingw
+# 4. run `python prepare_windows package C:\gpsim_project` from patched_gpsim root directory
+# 5. You can now execute gpsim from C:\gpsim_project\gpsim\gpsim\bin 
 
 import urllib
 import os.path
@@ -20,7 +27,7 @@ cygwin = "C:/cygwin"
 
 #All needed packages
 reqs = []
-reqs.append(['popt-1.8.1', 'http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/popt-dev-1.10.2-tml-20050828.zip'])
+reqs.append(['popt', 'http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/popt-dev-1.10.2-tml-20050828.zip'])
 reqs.append(['glib', 'http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib-dev_2.28.8-1_win32.zip'])
 reqs.append(['pango', 'http://ftp.gnome.org/pub/gnome/binaries/win32/pango/1.29/pango-dev_1.29.4-1_win32.zip'])
 reqs.append(['gtk+', 'http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-dev_2.24.10-1_win32.zip'])
@@ -30,8 +37,10 @@ reqs.append(['gdk-pixbuf', 'http://ftp.gnome.org/pub/gnome/binaries/win32/gdk-pi
 reqs.append(['fontconfig', 'http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/fontconfig-dev_2.8.0-2_win32.zip'])
 reqs.append(['gtkextra-2', r'http://sourceforge.net/projects/gtkextra/files/2.1.2/gtk%2Bextra-2.1.2-dev.zip'])
 reqs.append(['pthreads-src', 'ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-9-1-release.zip'])
+reqs.append(['readline', 'http://gpsim.sourceforge.net/gpsimWin32/packages/readline-5.2-20061112-lib.zip'])
 
-#All dlls and other files that need to be copied where gpsim.dll is
+#All dlls and other files that need to be copied where gpsim.exe is so that is can find them and use them
+#Imagine how painstaking it was to find all the right ones...
 deps = []
 deps.append([('bin/libpopt-0.dll',), 'http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/popt-1.10.2-tml-20050828.zip'])
 deps.append([('bin/libgthread-2.0-0.dll', 'bin/libgio-2.0-0.dll', 'bin/libglib-2.0-0.dll', 'bin/libgobject-2.0-0.dll', 'bin/libgmodule-2.0-0.dll'), 'http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip'])
