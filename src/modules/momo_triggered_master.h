@@ -29,10 +29,12 @@ class MomoTriggeredMaster : public TriggerObject, MomoDevice, MomoDataSource
 
 	PyObject 				*module_object;
 	PyObject				*handler_object;
+	PyObject				*response_object;
 	bool					initialized;
 
 	void 					initialize_python();
 	bool					load_call_data(uint8_t *out_addr, std::vector<uint8_t> &params);
+	PyObject 				*create_response_obj(const std::vector<uint8_t> &resp);
 
 	public:
 	MomoTriggeredMaster(const char *name);
@@ -45,6 +47,7 @@ class MomoTriggeredMaster : public TriggerObject, MomoDevice, MomoDataSource
 	static Module *construct(const char *name);
 
 	virtual uint8_t generate_call(std::vector<uint8_t> &params);
+	virtual void process_response(const std::vector<uint8_t> &response);
 };
 
 }

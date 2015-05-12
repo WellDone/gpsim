@@ -129,7 +129,9 @@ class MomoDataSource
 {
 	public:
 	virtual ~MomoDataSource() {};
+	
 	virtual uint8_t generate_call(std::vector<uint8_t> &out_params) = 0;
+	virtual void 	process_response(const std::vector<uint8_t> &response) = 0;
 };
 
 #endif

@@ -12,6 +12,7 @@ MomoMasterBehavior::MomoMasterBehavior(I2CSCLPin *new_scl, I2CSDAPin *new_sda) :
 	next_bp = 0;
 	microstate = kIdleMicrostate;
 	picostate = kNotWaiting;
+	reading_data = false;
 }
 
 MomoMasterBehavior::~MomoMasterBehavior()
@@ -29,6 +30,7 @@ void MomoMasterBehavior::resend()
 	state = kMasterSendingData;
 	send_i = 0;
 	receive_i = 0;
+	reading_data = false;
 
 	check_and_start();
 }
@@ -191,6 +193,7 @@ void MomoMasterBehavior::callback()
 
 		case kMasterReceivingData:
 		case kMasterFinishingRead:
+		case kMasterRestartingRead:
 		receive_callback();
 		break;
 
@@ -201,7 +204,10 @@ void MomoMasterBehavior::callback()
 
 void MomoMasterBehavior::process_response()
 {
-	printf("Calling command function.\n");
+	/*
+	 * Forward the data on to our data_source so that it can decide what to do with the result.
+	 */ 
+	data_source->process_response(receive_data);
 }
 
 void MomoMasterBehavior::receive_callback()
@@ -261,12 +267,41 @@ void MomoMasterBehavior::receive_callback()
 				receive_data.push_back(current_byte);
 
 				++receive_i;
-				if (receive_i < 2)
-					begin_receive_data_byte();
-				else if (receive_i == 2)
+				
+				if (receive_i == 2 && reading_data == false)
 					check_return_status();
+				else if(reading_data && receive_i == kMIBPacketLength)
+					check_received_packet();
+				else
+					begin_receive_data_byte();
 			}
 		}
+	}
+}
+
+void MomoMasterBehavior::check_received_packet()
+{
+	uint8_t sum = 0;
+
+	for (size_t i=0; i<receive_data.size(); ++i)
+		sum += receive_data[i];
+
+	//If there was a checksum error, read again, otherwise we're done
+	if (sum == 0)
+	{
+		nack_next_byte = true;
+		state = kMasterFinishingRead;
+		read_status = kStopReading;
+
+		begin_receive_data_byte();
+	}
+	else
+	{
+		nack_next_byte = true;
+		state = kMasterRestartingRead;
+		read_status = kRestartRead;
+
+		begin_receive_data_byte();
 	}
 }
 
@@ -309,6 +344,17 @@ void MomoMasterBehavior::check_return_status()
 			nack_next_byte = true;
 			state = kMasterFinishingRead;
 			read_status = kStopReading;
+
+			begin_receive_data_byte();
+		}
+		else
+		{
+			//Restart the read transaction to read the rest of the data into our buffer
+			reading_data = true;
+
+			nack_next_byte = true;
+			state = kMasterRestartingRead;
+			read_status = kRestartRead;
 
 			begin_receive_data_byte();
 		}

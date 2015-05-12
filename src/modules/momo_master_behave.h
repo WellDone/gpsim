@@ -89,6 +89,8 @@ class MomoMasterBehavior : public TriggerObject
 
 	uint8_t					address;
 	bool					nack_next_byte;
+	bool 					reading_data;
+	size_t					receive_length;
 
 	MasterReturnStatus		read_status;
 	MomoDataSource			*data_source;
@@ -120,6 +122,7 @@ class MomoMasterBehavior : public TriggerObject
 	void resend();
 
 	void check_return_status();
+	void check_received_packet();
 
 	public:
 	MomoMasterBehavior(I2CSCLPin *new_scl, I2CSDAPin *new_sda);

@@ -8,7 +8,7 @@ extern size_t num_python_instances;
 MomoTriggeredMaster::MomoTriggeredMaster(const char *new_name) : MomoDevice(new_name), master(scl, sda),
 																 trigger("trigger_cycle", 1, "cycle to trigger the transmission"),
 																 state(kCheckTriggerState), module_object(NULL),
-																 handler_object(NULL), initialized(false),
+																 handler_object(NULL), response_object(NULL), initialized(false),
 																 python_module("python_module", "", "python module")
 {
 	bp_manager = &get_cycles();
@@ -50,7 +50,33 @@ void MomoTriggeredMaster::initialize_python()
 	if (handler_object == NULL)
 		return;
 
+	response_object = load_python_function(module_object, std::string(kMasterProcessorName));
+	if (response_object == NULL)
+		return;
+
 	initialized = true;
+}
+
+PyObject* MomoTriggeredMaster::create_response_obj(const std::vector<uint8_t> &resp)
+{
+	PyObject *obj = PyTuple_New(resp.size());
+
+	if (!obj)
+		return NULL;
+
+	for (size_t i=0; i<resp.size(); ++i)
+	{
+		PyObject *num = PyInt_FromLong(resp[i]);
+		if (num == NULL)
+		{
+			Py_DECREF(obj);
+			return NULL;
+		}
+
+		PyTuple_SetItem(obj, i, num);
+	}
+
+	return obj;
 }
 
 bool MomoTriggeredMaster::load_call_data(uint8_t *out_addr, std::vector<uint8_t> &params)
@@ -159,6 +185,32 @@ uint8_t MomoTriggeredMaster::generate_call(std::vector<uint8_t> &params)
 
 	load_call_data(&addr, params);
 	return addr;
+}
+
+void MomoTriggeredMaster::process_response(const std::vector<uint8_t> &response)
+{
+	PyObject *obj = create_response_obj(response);
+	if (!obj)
+	{
+		Py_DECREF(obj);
+		printf("Could not create response object.\n");
+		return;
+	}
+
+	PyObject *args = PyTuple_New(1);
+	if (!args)
+	{
+		Py_DECREF(obj);
+		return;
+	}
+
+	PyTuple_SetItem(args, 0, obj); //steals ref to obj
+
+	PyObject *retval = PyObject_CallObject(response_object, args);
+	PyObject *err = PyErr_Occurred();
+
+	Py_DECREF(args);
+	Py_XDECREF(retval);
 }
 
 void MomoTriggeredMaster::new_sda_edge(bool value)
