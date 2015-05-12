@@ -16,7 +16,7 @@ enum TriggeredMasterState
 	kTriggerState
 };
 
-class MomoTriggeredMaster : public TriggerObject, MomoDevice
+class MomoTriggeredMaster : public TriggerObject, MomoDevice, MomoDataSource
 {
 	private:
 	Cycle_Counter			*bp_manager;
@@ -32,7 +32,7 @@ class MomoTriggeredMaster : public TriggerObject, MomoDevice
 	bool					initialized;
 
 	void 					initialize_python();
-	bool					load_call_data();
+	bool					load_call_data(uint8_t *out_addr, std::vector<uint8_t> &params);
 
 	public:
 	MomoTriggeredMaster(const char *name);
@@ -43,6 +43,8 @@ class MomoTriggeredMaster : public TriggerObject, MomoDevice
 	virtual void new_scl_edge(bool value);
 
 	static Module *construct(const char *name);
+
+	virtual uint8_t generate_call(std::vector<uint8_t> &params);
 };
 
 }

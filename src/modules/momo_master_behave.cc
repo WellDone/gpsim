@@ -5,7 +5,7 @@
 namespace MomoModule 
 {
 
-MomoMasterBehavior::MomoMasterBehavior(I2CSCLPin *new_scl, I2CSDAPin *new_sda) : scl(new_scl), sda(new_sda)
+MomoMasterBehavior::MomoMasterBehavior(I2CSCLPin *new_scl, I2CSDAPin *new_sda) : scl(new_scl), sda(new_sda), data_source(NULL)
 {
 	state = kMasterIdle;
 	bp_manager = &get_cycles();
@@ -19,6 +19,11 @@ MomoMasterBehavior::~MomoMasterBehavior()
 
 }
 
+void MomoMasterBehavior::set_data_source(MomoDataSource *src)
+{
+	data_source = src;
+}
+
 void MomoMasterBehavior::resend()
 {
 	state = kMasterSendingData;
@@ -28,9 +33,16 @@ void MomoMasterBehavior::resend()
 	check_and_start();
 }
 
-void MomoMasterBehavior::send(uint8_t new_addr, const std::vector<uint8_t> &data)
+void MomoMasterBehavior::send()
 {
-	address = new_addr;
+	if (!data_source)
+	{
+		printf("Someone tried to send a master message without first specifiying a generator function to build the call parameters.\n");
+		return;
+	}
+
+	std::vector<uint8_t> data;
+	address = data_source->generate_call(data);
 
 	send_data.resize(data.size() + 1);
 	for (size_t i=0; i<data.size(); ++i)
@@ -205,7 +217,7 @@ void MomoMasterBehavior::receive_callback()
 		if (read_status == kStopReading)
 			process_response();
 		else if (read_status == kResendCommand)
-			resend();
+			send();
 		break;
 
 		case kReceivingBit:
@@ -355,7 +367,7 @@ void MomoMasterBehavior::send_callback()
 		else if (picostate == kCheckingSDA)
 		{
 			if (current_bit != sda->getDrivenState())
-				resend();
+				send();
 
 			++num_sda_checks;
 			if (num_sda_checks == (kNumHalfBaudCycles-1))

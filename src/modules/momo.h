@@ -125,4 +125,11 @@ PyObject *	load_python_function(PyObject *module, const std::string &function_na
 
 };
 
+class MomoDataSource
+{
+	public:
+	virtual ~MomoDataSource() {};
+	virtual uint8_t generate_call(std::vector<uint8_t> &out_params) = 0;
+};
+
 #endif

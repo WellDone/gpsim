@@ -53,7 +53,7 @@ void MomoTriggeredMaster::initialize_python()
 	initialized = true;
 }
 
-bool MomoTriggeredMaster::load_call_data()
+bool MomoTriggeredMaster::load_call_data(uint8_t *out_addr, std::vector<uint8_t> &params)
 {
 	PyObject *args = PyTuple_New(0);
 	if (!args)
@@ -108,7 +108,6 @@ bool MomoTriggeredMaster::load_call_data()
 	Py_DECREF(send_addr_obj);
 
 	size_t len = PySequence_Length(params_obj);
-	std::vector<uint8_t>	params;
 
 	params.resize(len);
 	for (size_t i=0; i<len;++i)
@@ -127,7 +126,7 @@ bool MomoTriggeredMaster::load_call_data()
 		Py_DECREF(obj);
 	}
 
-	master.send(to_address, params);
+	*out_addr = to_address;
 	return true;
 }
 
@@ -149,8 +148,17 @@ void MomoTriggeredMaster::callback()
 			return;
 		}
 
-		load_call_data();
+		master.set_data_source(this);
+		master.send();
 	}
+}
+
+uint8_t MomoTriggeredMaster::generate_call(std::vector<uint8_t> &params)
+{
+	uint8_t addr = 127;
+
+	load_call_data(&addr, params);
+	return addr;
 }
 
 void MomoTriggeredMaster::new_sda_edge(bool value)

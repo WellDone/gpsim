@@ -91,6 +91,7 @@ class MomoMasterBehavior : public TriggerObject
 	bool					nack_next_byte;
 
 	MasterReturnStatus		read_status;
+	MomoDataSource			*data_source;
 
 
 	void set_bp(guint64 in_cycles);
@@ -129,7 +130,8 @@ class MomoMasterBehavior : public TriggerObject
 	void new_sda_edge(bool value);
 	void new_scl_edge(bool value);
 
-	void send(uint8_t address, const std::vector<uint8_t> &data);
+	void send();
+	void set_data_source(MomoDataSource *src);
 };
 
 }
