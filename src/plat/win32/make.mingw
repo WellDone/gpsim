@@ -93,7 +93,7 @@ FLEX = flex
 # GLIB_CFLAGS, GTK_CFLAGS etc corresponding to what other modules we
 # depend on.
 
-CFLAGS = $(OPTIMIZE) $(INCLUDES) $(DEFINES) $(DEPCFLAGS) $(WARNINGS)
+CFLAGS = $(OPTIMIZE) $(INCLUDES) $(DEFINES) $(DEPCFLAGS) $(WARNINGS) -I/cygdrive/c/Anaconda/include
 
 ################
 # name of auto-generated makefile
