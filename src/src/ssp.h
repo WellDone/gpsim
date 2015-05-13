@@ -121,6 +121,8 @@ public:
   void setWCOL();
   void setSSPOV() { put_value(value.get() | SSPOV);}
   void setSSPMODULE(SSP_MODULE *);
+  
+  virtual void reset(RESET_TYPE r);
 
 
 private:

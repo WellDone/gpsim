@@ -291,6 +291,27 @@ void _SSPCON::put(unsigned int new_value)
       m_sspmod->changeSSP(new_value, old_value);
 }
 
+void _SSPCON::reset(RESET_TYPE r)
+{
+  switch (r) 
+  {
+    case POR_RESET:
+      putRV(por_value);
+      break;
+
+    case WDT_RESET:
+      // Most registers simply retain their value across WDT resets.
+      //putRV(wdtr_value); 
+      break;
+
+    default:
+      printf("Disabling SSP module across reset.\n");
+      put(0); // clear register across all resets
+      break;
+  }
+
+}
+
 /*
 	update SSPCON without action
 */
