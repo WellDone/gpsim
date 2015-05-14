@@ -178,8 +178,13 @@ bool MomoPythonSlaveBehavior::interpret_response(PyObject *retval, uint8_t *stat
 	*status = (uint8_t)PyNumber_AsSsize_t(status_obj, NULL);
 	Py_DECREF(status_obj);
 
+	//The has_data bit cannot be set by the application code
+	*status &= ~(1 << 7);
+	
 	//Set the app defined bit since we got this status from the application.
-	*status |= 1 << 6;
+	//If the status was ASYNC, then don't do this.
+	if (*status != (0x3f))
+		*status |= 1 << 6;
 
 	if (PySequence_Check(value_obj) == 0)
 	{
