@@ -106,6 +106,7 @@ void P16F1847::create_ports()
   add_sfr_register(m_iocbp, 0x394);
   add_sfr_register(m_portb, 0x0D);
   add_sfr_register(m_trisb, 0x8D);
+  add_sfr_register(m_latb, 0x10D);
   add_sfr_register(&m_anselb, 0x18D, RegisterValue(0xFE, 0));
   add_sfr_register(m_wpub, 0x20D);
 
