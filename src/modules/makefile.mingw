@@ -18,6 +18,7 @@ LIBS = 	-L $(POPT_PATH)/lib -l popt \
 	-L $(GDK_PIXBUF_PATH)/lib -l gdk_pixbuf-2.0 \
 	-L $(GTK_PATH)/lib -l gdk-win32-2.0 -l gtk-win32-2.0 \
 	-L $(GLIB_PATH)/lib -l glib-2.0 -l gobject-2.0 \
+	-L /cygdrive/c/Anaconda/libs -l python27 \
 	../src/libgpsim.a
 
 INCLUDES = -I ../plat/win32 \
@@ -39,8 +40,12 @@ modules_OBJECTS =		\
 	encoder.o		\
 	i2c.o			\
 	i2c-eeprom.o		\
-	momo_slave.o    \
 	momo_python_slave.o \
+	momo_master_behave.o \
+	momo_slave_behave.o \
+	momo_python_slave_behave.o \
+	momo_triggered_master.o \
+	momo.o \
 	led.o			\
 	logic.o			\
 	push_button.o		\

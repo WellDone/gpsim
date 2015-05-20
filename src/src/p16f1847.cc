@@ -48,7 +48,7 @@ void  P16F1847::create(int ram_top, int eeprom_size)
 
   pic_processor::create();
 
-  e->initialize(eeprom_size, 16, 16, 0x8000);
+  e->initialize(eeprom_size, 32, 32, 0x8000); //This device has 32 word flash pages
   e->set_intcon(intcon);
   e->get_reg_eecon1()->set_valid_bits(0xff);
 
@@ -106,6 +106,7 @@ void P16F1847::create_ports()
   add_sfr_register(m_iocbp, 0x394);
   add_sfr_register(m_portb, 0x0D);
   add_sfr_register(m_trisb, 0x8D);
+  add_sfr_register(m_latb, 0x10D);
   add_sfr_register(&m_anselb, 0x18D, RegisterValue(0xFE, 0));
   add_sfr_register(m_wpub, 0x20D);
 
